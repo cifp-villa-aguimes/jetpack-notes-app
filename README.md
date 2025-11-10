@@ -1,33 +1,29 @@
-# 🗒️ NotesApp Typed
+# 🗒️ NotesApp (Sealed Navigation)
 
 Aplicación educativa de **notas** desarrollada en **Jetpack Compose**,  
-con **navegación tipada** y gestión de estado mediante **Flow**.
+con **navegación estructurada mediante sealed class** y gestión de estado mediante **Flow**.
 
-> Versión: **v0.3.0-nav-typed** — Navegación con rutas tipadas y estructura modular.
+> Versión: **v0.2.0-nav-sealed** — Navegación con rutas centralizadas mediante sealed class.
 
 ---
 
 ## Descripción
 
-**Compose Notes (Safe Nav)** es una aplicación Android moderna para la gestión de notas,  
-diseñada como recurso didáctico para comprender la arquitectura actual de **Jetpack Compose**:  
-**UI declarativa**, **navegación tipada segura** y **estado reactivo con Flows**.
+**Compose Notes (Safe Nav)** es una aplicación Android moderna para la gestión de notas, diseñada como recurso didáctico para comprender la arquitectura actual de **Jetpack Compose**: **UI declarativa**, **navegación estructurada mediante sealed class** y **estado reactivo con Flows**.
 
-Esta versión (v0.3.0) representa un **punto intermedio del proyecto**,  
-que sienta las bases para la siguiente fase: **persistencia con DataStore y Room**.
+Esta versión (v0.2.0) representa un **punto intermedio del proyecto**, que sienta las bases para la siguiente fase: **navegación con tipos seguros**.
 
 ---
 
 ## Objetivo didáctico
 
-El proyecto forma parte del módulo **Programación Multimedia y Dispositivos Móviles (PGL)**,  
-dentro de la **Unidad de Trabajo 2 — Jetpack Compose** del ciclo **DAM/DAW**.
+El proyecto forma parte del módulo **Programación Multimedia y Dispositivos Móviles (PGL)**, dentro de la **Unidad de Trabajo 2 — Jetpack Compose** del ciclo **DAM**.
 
 El propósito de esta versión es que el alumnado comprenda:
 
 - Cómo Jetpack Compose gestiona la interfaz de forma **declarativa y reactiva**.  
 - La estructura moderna de una app con **Scaffold, AppBars, FAB, BottomBar, Sheets y Dialogs**.  
-- La implementación de una **navegación segura** usando **rutas tipadas (@Serializable)**.  
+- La implementación de una **navegación estructurada y centralizada** con **sealed class**.  
 - El uso de **StateFlow + collectAsState()** para compartir y sincronizar estado global.
 
 ---
@@ -36,7 +32,7 @@ El propósito de esta versión es que el alumnado comprenda:
 
 - 📝 Crear, editar y eliminar notas.
 - ⭐ Marcar notas como favoritas.
-- 🧭 Navegación **type-safe** con rutas tipadas (`@Serializable`).
+- 🧭 Navegación **segura y centralizada** con rutas sealed class.
 - 🎨 Interfaz moderna con **Material 3** y **Scaffold** (AppBar, FAB, BottomBar...).
 - ⚙️ Pantallas: Login · Home · Favoritos · Detalle · Ajustes.
 - 💬 Estado global con **StateFlow** y sincronización en tiempo real.
@@ -52,7 +48,7 @@ El propósito de esta versión es que el alumnado comprenda:
 - **Scaffold:** patrón de estructura moderna (AppBar + FAB + contenido).  
 - **WindowInsets.safeDrawing:** evita solapamiento con la Dynamic Island / notch.  
 - **DisposableEffect:** control del ciclo de vida Compose.  
-- **Navegación tipada:** rutas seguras con `toRoute()` y `popUpTo()`.  
+- **Navegación estructurada:** rutas seguras con `NavScreen.route` y `popUpTo()`.  
 - **Arquitectura limpia:** separación UI / Lógica / Estado.
 
 ---
@@ -62,7 +58,7 @@ El propósito de esta versión es que el alumnado comprenda:
 ```text
 app/src/main/java/edu/dam/notesapptyped/
 ├── data/                 # Estado global (AppState) y modelo Note
-├── navigation/           # Gráfico y rutas tipadas (@Serializable)
+├── navigation/           # Gráfico y rutas centralizadas (sealed class)
 ├── theme/                # Estilos, tipografía y colores Material 3
 └── ui/                   # Interfaz y pantallas
     ├── components/       # Componentes compartidos (BottomBar, etc.)
@@ -80,9 +76,8 @@ app/src/main/java/edu/dam/notesapptyped/
 |-------------|----------------|
 | **Kotlin** | Lenguaje base |
 | **Jetpack Compose** | UI declarativa y moderna |
-| **Navigation Compose 2.9.5** | Navegación tipada |
+| **Navigation Compose 2.9.5** | Navegación con sealed class |
 | **Material 3** | Componentes visuales |
-| **Kotlin Serialization** | Serialización para rutas seguras |
 | **Flow / MutableStateFlow** | Gestión del estado reactivo |
 
 ---
