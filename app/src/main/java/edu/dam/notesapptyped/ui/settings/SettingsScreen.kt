@@ -16,7 +16,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import edu.dam.notesapptyped.data.AppState
-import edu.dam.notesapptyped.navigation.Settings
+import edu.dam.notesapptyped.navigation.NavScreen
 import edu.dam.notesapptyped.ui.components.AppBottomBar
 
 private const val NAME_MIN = 3
@@ -57,7 +57,7 @@ fun SettingsScreen(
                 }
             )
         },
-        bottomBar = { AppBottomBar(nav = nav, current = Settings) }
+        bottomBar = { AppBottomBar(nav = nav, current = NavScreen.Settings.route) }
     ) { innerPadding ->
         Column(
             Modifier

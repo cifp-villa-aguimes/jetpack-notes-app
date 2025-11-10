@@ -10,8 +10,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import edu.dam.notesapptyped.navigation.*
 
-private data class BottomItemTyped(
-    val route: RootDestination,
+private data class BottomItem(
+    val route: String,
     val label: String,
     val icon: ImageVector
 )
@@ -19,12 +19,12 @@ private data class BottomItemTyped(
 @Composable
 fun AppBottomBar(
     nav: NavController,
-    current: RootDestination
+    current: String
 ) {
     val items = listOf(
-        BottomItemTyped(Home, "Inicio", Icons.Filled.Home),
-        BottomItemTyped(Favorites, "Favoritos", Icons.Filled.Favorite),
-        BottomItemTyped(Settings, "Ajustes", Icons.Filled.Settings),
+        BottomItem(NavScreen.Home.route, "Inicio", Icons.Filled.Home),
+        BottomItem(NavScreen.Favorites.route, "Favoritos", Icons.Filled.Favorite),
+        BottomItem(NavScreen.Settings.route, "Ajustes", Icons.Filled.Settings),
     )
 
     NavigationBar {
@@ -40,7 +40,7 @@ fun AppBottomBar(
                             // restaura estado al volver
                             restoreState = true
                             // deja Home como “root” guardando estados de pestañas
-                            popUpTo(Home) { saveState = true }
+                            popUpTo(NavScreen.Home.route) { saveState = true }
                         }
                     }
                 },

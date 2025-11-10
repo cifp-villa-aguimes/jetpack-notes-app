@@ -15,10 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import edu.dam.notesapptyped.data.AppState
-import edu.dam.notesapptyped.navigation.Detail
-import edu.dam.notesapptyped.navigation.Favorites
-import edu.dam.notesapptyped.navigation.Home
-import edu.dam.notesapptyped.navigation.Login
+import edu.dam.notesapptyped.navigation.NavScreen
 import edu.dam.notesapptyped.ui.components.AppBottomBar
 import edu.dam.notesapptyped.ui.home.components.AddNoteSheet
 import edu.dam.notesapptyped.ui.home.components.NoteCard
@@ -70,13 +67,13 @@ fun HomeScreen(
                 actions = {
                     IconButton(
                         onClick = {
-                            nav.navigate(Login) {
+                            nav.navigate(NavScreen.Login.route) {
                                 // popUpTo indica hasta dónde “desapilar” la navegación
                                 // Es decir: elimina del back stack todas las pantallas
                                 // hasta llegar a Home (sin incluirla, por defecto).
                                 // Así evitamos que al pulsar atrás desde Login,
                                 // el usuario vuelva a Home.
-                                popUpTo(Home) {
+                                popUpTo(NavScreen.Home.route) {
                                     inclusive = true
                                     // inclusive = true → también elimina la pantalla Home.
                                     // En este caso, Home se borra completamente de la pila.
@@ -100,7 +97,12 @@ fun HomeScreen(
                 FloatingActionButton(onClick = { showSheet = true }) { Text("+") }
             }
         },
-        bottomBar = { AppBottomBar(nav = nav, current = if (onlyFavorites) Favorites else Home) }
+        bottomBar = {
+            AppBottomBar(
+                nav = nav,
+                current = if (onlyFavorites) NavScreen.Favorites.route else NavScreen.Home.route
+            )
+        }
     ) { innerPadding ->
         val sortedNotes by remember(notes, onlyFavorites) {
             derivedStateOf {
@@ -145,7 +147,7 @@ fun HomeScreen(
                 ) { note ->
                     NoteCard(
                         note = note,
-                        onOpen = { nav.navigate(Detail(id = note.id)) },
+                        onOpen = { nav.navigate(NavScreen.Detail.createRoute(note.id)) },
                         onToggleFavorite = { state.toggleFavorite(note.id) },
                         onDelete = { toDeleteId = note.id }
                     )
