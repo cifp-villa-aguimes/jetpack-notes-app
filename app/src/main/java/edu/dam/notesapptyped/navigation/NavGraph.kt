@@ -15,19 +15,18 @@ import edu.dam.notesapptyped.ui.settings.SettingsScreen
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavGraph(navController: NavHostController, state: AppState) {
-    NavHost(navController, startDestination = NavScreen.Login.route) {
-        composable(NavScreen.Login.route) { LoginScreen(navController, state) }
-        composable(NavScreen.Home.route) { HomeScreen(navController, state) }
-        composable(NavScreen.Home.route) { HomeScreen(navController, state) }
-        composable(NavScreen.Favorites.route) {
+    NavHost(navController, startDestination = ROUTE_LOGIN) {
+        composable(ROUTE_LOGIN) { LoginScreen(navController, state) }
+        composable(ROUTE_HOME) { HomeScreen(navController, state) }
+        composable(ROUTE_FAVORITES) {
             HomeScreen(
                 nav = navController,
                 state = state,
                 onlyFavorites = true
             )
         }
-        composable(NavScreen.Settings.route) { SettingsScreen(navController, state) }
-        composable(NavScreen.Detail.route) { backStackEntry ->
+        composable(ROUTE_SETTINGS) { SettingsScreen(navController, state) }
+        composable(ROUTE_DETAIL) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id").orEmpty()
             DetailScreen(navController, state, id)
         }

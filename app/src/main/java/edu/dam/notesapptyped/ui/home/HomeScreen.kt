@@ -15,7 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import edu.dam.notesapptyped.data.AppState
-import edu.dam.notesapptyped.navigation.NavScreen
+import edu.dam.notesapptyped.navigation.ROUTE_FAVORITES
+import edu.dam.notesapptyped.navigation.ROUTE_HOME
+import edu.dam.notesapptyped.navigation.ROUTE_LOGIN
+import edu.dam.notesapptyped.navigation.detailRoute
 import edu.dam.notesapptyped.ui.components.AppBottomBar
 import edu.dam.notesapptyped.ui.home.components.AddNoteSheet
 import edu.dam.notesapptyped.ui.home.components.NoteCard
@@ -67,13 +70,13 @@ fun HomeScreen(
                 actions = {
                     IconButton(
                         onClick = {
-                            nav.navigate(NavScreen.Login.route) {
+                            nav.navigate(ROUTE_LOGIN) {
                                 // popUpTo indica hasta dónde “desapilar” la navegación
                                 // Es decir: elimina del back stack todas las pantallas
                                 // hasta llegar a Home (sin incluirla, por defecto).
                                 // Así evitamos que al pulsar atrás desde Login,
                                 // el usuario vuelva a Home.
-                                popUpTo(NavScreen.Home.route) {
+                                popUpTo(ROUTE_HOME) {
                                     inclusive = true
                                     // inclusive = true → también elimina la pantalla Home.
                                     // En este caso, Home se borra completamente de la pila.
@@ -100,7 +103,7 @@ fun HomeScreen(
         bottomBar = {
             AppBottomBar(
                 nav = nav,
-                current = if (onlyFavorites) NavScreen.Favorites.route else NavScreen.Home.route
+                current = if (onlyFavorites) ROUTE_FAVORITES else ROUTE_HOME
             )
         }
     ) { innerPadding ->
@@ -147,7 +150,7 @@ fun HomeScreen(
                 ) { note ->
                     NoteCard(
                         note = note,
-                        onOpen = { nav.navigate(NavScreen.Detail.createRoute(note.id)) },
+                        onOpen = { nav.navigate(detailRoute(note.id)) },
                         onToggleFavorite = { state.toggleFavorite(note.id) },
                         onDelete = { toDeleteId = note.id }
                     )

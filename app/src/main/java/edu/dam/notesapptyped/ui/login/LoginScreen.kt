@@ -17,7 +17,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import edu.dam.notesapptyped.data.AppState
-import edu.dam.notesapptyped.navigation.NavScreen
+import edu.dam.notesapptyped.navigation.ROUTE_HOME
+import edu.dam.notesapptyped.navigation.ROUTE_LOGIN
 
 private const val NAME_MIN = 3
 private const val NAME_MAX = 30
@@ -123,8 +124,8 @@ fun LoginScreen(nav: NavController, state: AppState) {
                             if (canEnter) {
                                 state.userName.value = trimmed
                                 focus.clearFocus()
-                                nav.navigate(NavScreen.Home.route) {
-                                    popUpTo(NavScreen.Login.route) { inclusive = true }
+                                nav.navigate(ROUTE_HOME) {
+                                    popUpTo(ROUTE_LOGIN) { inclusive = true }
                                 }
                             }
                         }
@@ -145,8 +146,8 @@ fun LoginScreen(nav: NavController, state: AppState) {
                 onClick = {
                     state.userName.value = trimmed
                     focus.clearFocus()
-                    nav.navigate(NavScreen.Home.route) {
-                        popUpTo(NavScreen.Login.route) { inclusive = true }
+                    nav.navigate(ROUTE_HOME) {
+                        popUpTo(ROUTE_LOGIN) { inclusive = true }
                     }
                 },
                 modifier = Modifier.fillMaxWidth()

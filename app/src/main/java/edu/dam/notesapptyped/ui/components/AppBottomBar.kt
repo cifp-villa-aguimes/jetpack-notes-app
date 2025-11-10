@@ -22,9 +22,9 @@ fun AppBottomBar(
     current: String
 ) {
     val items = listOf(
-        BottomItem(NavScreen.Home.route, "Inicio", Icons.Filled.Home),
-        BottomItem(NavScreen.Favorites.route, "Favoritos", Icons.Filled.Favorite),
-        BottomItem(NavScreen.Settings.route, "Ajustes", Icons.Filled.Settings),
+        BottomItem(ROUTE_HOME, "Inicio", Icons.Filled.Home),
+        BottomItem(ROUTE_FAVORITES, "Favoritos", Icons.Filled.Favorite),
+        BottomItem(ROUTE_SETTINGS, "Ajustes", Icons.Filled.Settings),
     )
 
     NavigationBar {
@@ -40,7 +40,7 @@ fun AppBottomBar(
                             // restaura estado al volver
                             restoreState = true
                             // deja Home como “root” guardando estados de pestañas
-                            popUpTo(NavScreen.Home.route) { saveState = true }
+                            popUpTo(ROUTE_HOME) { saveState = true }
                         }
                     }
                 },
