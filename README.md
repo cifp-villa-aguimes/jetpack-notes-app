@@ -1,17 +1,17 @@
-# 🗒️ NotesApp (Sealed Navigation)
+# 🗒️ NotesApp (String Navigation)
 
 Aplicación educativa de **notas** desarrollada en **Jetpack Compose**,  
-con **navegación estructurada mediante sealed class** y gestión de estado mediante **Flow**.
+con **navegación básica** y gestión de estado mediante **Flow**.
 
-> Versión: **v0.2.0-nav-sealed** — Navegación con rutas centralizadas mediante sealed class.
+> Versión: **v0.1.0-nav-strings** — Navegación básica por rutas de texto (String).
 
 ---
 
 ## Descripción
 
-**Compose Notes (Safe Nav)** es una aplicación Android moderna para la gestión de notas, diseñada como recurso didáctico para comprender la arquitectura actual de **Jetpack Compose**: **UI declarativa**, **navegación estructurada mediante sealed class** y **estado reactivo con Flows**.
+**Compose Notes** es una aplicación Android moderna para la gestión de notas, diseñada como recurso didáctico para comprender la arquitectura actual de **Jetpack Compose**: **UI declarativa**, **navegación básica** y **estado reactivo con Flows**.
 
-Esta versión (v0.2.0) representa un **punto intermedio del proyecto**, que sienta las bases para la siguiente fase: **navegación con tipos seguros**.
+Esta versión (v0.2.0) representa un **punto inicial del proyecto**, que sienta las bases para la siguiente fase: **navegación estructurada mediante sealed class**.
 
 ---
 
@@ -23,7 +23,7 @@ El propósito de esta versión es que el alumnado comprenda:
 
 - Cómo Jetpack Compose gestiona la interfaz de forma **declarativa y reactiva**.  
 - La estructura moderna de una app con **Scaffold, AppBars, FAB, BottomBar, Sheets y Dialogs**.  
-- La implementación de una **navegación estructurada y centralizada** con **sealed class**.  
+- La implementación de una **navegación básica** con **rutas String**.  
 - El uso de **StateFlow + collectAsState()** para compartir y sincronizar estado global.
 
 ---
@@ -32,7 +32,7 @@ El propósito de esta versión es que el alumnado comprenda:
 
 - 📝 Crear, editar y eliminar notas.
 - ⭐ Marcar notas como favoritas.
-- 🧭 Navegación **segura y centralizada** con rutas sealed class.
+- 🧭 Navegación **simple** con rutas String (por ejemplo `"home"`, `"login"`).
 - 🎨 Interfaz moderna con **Material 3** y **Scaffold** (AppBar, FAB, BottomBar...).
 - ⚙️ Pantallas: Login · Home · Favoritos · Detalle · Ajustes.
 - 💬 Estado global con **StateFlow** y sincronización en tiempo real.
@@ -48,7 +48,7 @@ El propósito de esta versión es que el alumnado comprenda:
 - **Scaffold:** patrón de estructura moderna (AppBar + FAB + contenido).  
 - **WindowInsets.safeDrawing:** evita solapamiento con la Dynamic Island / notch.  
 - **DisposableEffect:** control del ciclo de vida Compose.  
-- **Navegación estructurada:** rutas seguras con `NavScreen.route` y `popUpTo()`.  
+- **Navegación por cadenas:** rutas simples como `"home"` o `"settings"`.
 - **Arquitectura limpia:** separación UI / Lógica / Estado.
 
 ---
@@ -58,7 +58,7 @@ El propósito de esta versión es que el alumnado comprenda:
 ```text
 app/src/main/java/edu/dam/notesapptyped/
 ├── data/                 # Estado global (AppState) y modelo Note
-├── navigation/           # Gráfico y rutas centralizadas (sealed class)
+├── navigation/           # Rutas String y funciones de ayuda (detailRoute, etc.)
 ├── theme/                # Estilos, tipografía y colores Material 3
 └── ui/                   # Interfaz y pantallas
     ├── components/       # Componentes compartidos (BottomBar, etc.)
@@ -76,7 +76,7 @@ app/src/main/java/edu/dam/notesapptyped/
 |-------------|----------------|
 | **Kotlin** | Lenguaje base |
 | **Jetpack Compose** | UI declarativa y moderna |
-| **Navigation Compose 2.9.5** | Navegación con sealed class |
+| **Navigation Compose 2.9.5** | Navegación básica con rutas Strins |
 | **Material 3** | Componentes visuales |
 | **Flow / MutableStateFlow** | Gestión del estado reactivo |
 
