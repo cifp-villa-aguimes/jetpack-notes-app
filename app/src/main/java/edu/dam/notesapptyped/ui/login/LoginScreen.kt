@@ -20,8 +20,6 @@ import edu.dam.notesapptyped.data.AppState
 import edu.dam.notesapptyped.data.prefs.UserPrefsRepository
 import edu.dam.notesapptyped.navigation.Home
 import edu.dam.notesapptyped.navigation.Login
-import edu.dam.notesapptyped.ui.common.USERNAME_MAX
-import edu.dam.notesapptyped.ui.common.USERNAME_MIN
 import edu.dam.notesapptyped.ui.common.UserNameSupportingText
 import edu.dam.notesapptyped.ui.common.validateUserName
 import kotlinx.coroutines.launch

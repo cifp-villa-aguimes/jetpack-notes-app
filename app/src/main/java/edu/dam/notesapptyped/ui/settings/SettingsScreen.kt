@@ -23,8 +23,6 @@ import edu.dam.notesapptyped.data.prefs.SortBy
 import edu.dam.notesapptyped.data.prefs.UserPrefsRepository
 import edu.dam.notesapptyped.navigation.Settings
 import edu.dam.notesapptyped.ui.components.AppBottomBar
-import edu.dam.notesapptyped.ui.common.USERNAME_MAX
-import edu.dam.notesapptyped.ui.common.USERNAME_MIN
 import edu.dam.notesapptyped.ui.common.UserNameSupportingText
 import edu.dam.notesapptyped.ui.common.validateUserName
 import kotlinx.coroutines.launch

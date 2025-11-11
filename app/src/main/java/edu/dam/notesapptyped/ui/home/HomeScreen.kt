@@ -24,6 +24,7 @@ import edu.dam.notesapptyped.navigation.Login
 import edu.dam.notesapptyped.ui.components.AppBottomBar
 import edu.dam.notesapptyped.ui.home.components.AddNoteSheet
 import edu.dam.notesapptyped.ui.home.components.SwipeableNoteCard
+import edu.dam.notesapptyped.ui.notes.NotesViewModel
 import kotlinx.coroutines.launch
 
 
@@ -34,11 +35,12 @@ fun HomeScreen(
     nav: NavController,
     state: AppState,
     prefs: UserPrefsRepository,
+    notesViewModel: NotesViewModel,
     onlyFavorites: Boolean = false
 ) {
     // Conectar los StateFlow a Compose
     val name by state.userName.collectAsState()
-    val notes by state.notes.collectAsState()
+    val notes by notesViewModel.notes.collectAsState()
     val sortBy by prefs.sortByFlow.collectAsState(initial = SortBy.DATE)
     val welcomeShown by prefs.welcomeShownFlow.collectAsState(initial = false)
 
@@ -178,7 +180,13 @@ fun HomeScreen(
                     SwipeableNoteCard(
                         note = note,
                         onOpen = { nav.navigate(Detail(id = note.id)) },
-                        onToggleFavorite = { state.toggleFavorite(note.id) },
+                        onToggleFavorite = {
+                            scope.launch {
+                                if (!notesViewModel.toggleFavorite(note.id)) {
+                                    snackbarHostState.showSnackbar("No se pudo guardar")
+                                }
+                            }
+                        },
                         onSwipeToDelete = { toDeleteId = note.id },
                         modifier = Modifier.animateItem()
                     )
@@ -199,10 +207,22 @@ fun HomeScreen(
                 resetForm()
             },
             onSave = { isFav ->
-                state.addNote(newTitle.trim(), newBody.trim(), isFavorite = isFav)
-                showSheet = false
-                resetForm()
-                scope.launch { snackbarHostState.showSnackbar("Nota creada") }
+                val author = name.ifBlank { "invitado" }
+                scope.launch {
+                    val success = notesViewModel.addNote(
+                        title = newTitle.trim(),
+                        body = newBody.trim().ifBlank { null },
+                        author = author,
+                        isFavorite = isFav
+                    )
+                    if (success) {
+                        showSheet = false
+                        resetForm()
+                        snackbarHostState.showSnackbar("Nota creada")
+                    } else {
+                        snackbarHostState.showSnackbar("No se pudo guardar")
+                    }
+                }
             },
             onDismissRequest = {
                 showSheet = false
@@ -219,10 +239,12 @@ fun HomeScreen(
             confirmButton = {
                 TextButton(onClick = {
                     val id = toDeleteId!!
-                    state.deleteNote(id)
-                    toDeleteId = null
                     scope.launch {
-                        snackbarHostState.showSnackbar("Nota eliminada")
+                        val success = notesViewModel.deleteNote(id)
+                        toDeleteId = null
+                        snackbarHostState.showSnackbar(
+                            if (success) "Nota eliminada" else "No se pudo eliminar"
+                        )
                     }
                 }) { Text("Eliminar") }
             },

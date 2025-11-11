@@ -71,7 +71,7 @@ internal fun AddNoteSheet(
                 label = { Text("Título") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                supportingText = { Text("${titleLength} / 80") },
+                supportingText = { Text("$titleLength / 80") },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) })
             )

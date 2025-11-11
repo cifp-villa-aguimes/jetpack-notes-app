@@ -1,15 +1,21 @@
+[![Made with Kotlin](https://img.shields.io/badge/Kotlin-1.9+-7F52FF?style=flat&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
+[![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?style=flat&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
+[![Room Persistence](https://img.shields.io/badge/Room-Persistence%20Library-3DDC84?style=flat&logo=android&logoColor=white)](https://developer.android.com/training/data-storage/room)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/cifp-villa-aguimes/jetpack-notes-app)
+
 # 🗒️ NotesApp Typed
 
 Aplicación educativa de **notas** desarrollada en **Jetpack Compose**,  
 con **navegación tipada** y gestión de estado mediante **Flow**.
 
-> Versión: **v0.4.0-datastore** — Persistencia ligera con DataStore y navegación tipada.
+> Versión: **v0.5.0-room-mvvm** — Persistencia estructurada con Room y patrón MVVM.
 
-## 🆕 Novedades de la versión v0.4.0
+## 🆕 Novedades de la versión v0.5.0
 
-- Sincronización reactiva del nombre de usuario entre Login, Ajustes y Home.
-- Persistencia del **tema oscuro**, criterio de ordenación y diálogo de bienvenida.
-- Refactorización de UI (swipe para eliminar, hojas modales alineadas) para mantener coherencia.
+- Capa de datos con **Room** (entidad `NoteEntity`, `NotesDao`, `NotesDatabase`).
+- Repositorio `NotesRepositoryImpl` + patrón **MVVM** con `NotesViewModel` y Service Locator manual.
+- Persistencia real de notas con operaciones CRUD reactivas (Flow).
+- Manejo de errores con mensajes SnackBar al fallar operaciones de guardado/borrado.
 
 ---
 
@@ -17,10 +23,10 @@ con **navegación tipada** y gestión de estado mediante **Flow**.
 
 **Compose Notes (Safe Nav)** es una aplicación Android moderna para la gestión de notas,  
 diseñada como recurso didáctico para comprender la arquitectura actual de **Jetpack Compose**:  
-**UI declarativa**, **navegación tipada segura**, **estado reactivo con Flows** y **persistencia ligera con DataStore**.
+**UI declarativa**, **navegación tipada segura**, **estado reactivo con Flows**, **persistencia ligera con DataStore** y ahora **persistencia estructurada con Room**.
 
-La versión (v0.4.0) consolida una capa de **preferencias persistentes** basada en DataStore,  
-marcando el paso previo a la fase de persistencia completa con Room.
+La versión **v0.5.0 (Room + MVVM)** incorpora la capa de base de datos con Room y un ViewModel dedicado,  
+consolidando el camino hacia la arquitectura completa de la app.
 
 ---
 
@@ -36,10 +42,11 @@ El propósito de esta versión es que el alumnado comprenda:
 - La implementación de una **navegación segura** usando **rutas tipadas (@Serializable)**.
 - El uso de **StateFlow + collectAsState()** para compartir y sincronizar estado global.
 - Cómo integrar una capa de **persistencia ligera con Jetpack DataStore** para ajustes de usuario.
+- Cómo estructurar la **persistencia con Room** siguiendo el patrón **Repository + MVVM**.
 
 ---
 
-## Características principales (v0.4.0)
+## Características principales (v0.5.0)
 
 - 📝 Crear, editar y eliminar notas.
 - ⭐ Marcar notas como favoritas.
@@ -48,6 +55,7 @@ El propósito de esta versión es que el alumnado comprenda:
 - ⚙️ Pantallas: Login · Home · Favoritos · Detalle · Ajustes.
 - 💬 Estado global con **StateFlow** y sincronización en tiempo real.
 - 💾 Persistencia ligera con **DataStore Preferences** (nombre, tema, diálogo de bienvenida y orden de notas).
+- 🗄️ Persistencia estructurada con **Room** (notas guardadas en base de datos local).
 - 📱 Diseño **responsive** con `WindowInsets.safeDrawing` (Edge-to-Edge).
 
 ---
@@ -57,6 +65,7 @@ El propósito de esta versión es que el alumnado comprenda:
 - **Declaratividad:** la interfaz se basa en el estado actual.
 - **StateFlow:** flujo reactivo que mantiene la UI sincronizada.
 - **DataStore Preferences:** almacenamiento ligero y asíncrono para ajustes de usuario.
+- **Room + MVVM:** persistencia estructurada con repositorio y ViewModel.
 - **remember / rememberSaveable:** persistencia temporal del estado.
 - **Scaffold:** patrón de estructura moderna (AppBar + FAB + contenido).
 - **WindowInsets.safeDrawing:** evita solapamiento con la Dynamic Island / notch.
@@ -79,11 +88,40 @@ El repositorio `UserPrefsRepository` expone estos valores como **Flow**, lo que 
 
 ---
 
+## Room + MVVM + Service Locator
+
+La persistencia estructurada se implementa con **Room**, siguiendo el patrón **Repository + MVVM** y un **Service Locator** ligero:
+
+1. **Room**
+   - `NoteEntity` (`data/local/entity`): entidad Room con índices para `updatedAt` y `isFavorite`.
+   - `NotesDao` (`data/local/dao`): expone consultas `Flow` y operaciones `suspend` (insert/update/delete/toggle).
+   - `NotesDatabase` (`data/local/NotesDatabase.kt`): registra la entidad y el DAO.
+
+2. **Repository**
+   - `NotesRepository` define la interfaz (observe, add, update, toggle, delete).
+   - `NotesRepositoryImpl` genera IDs/timestamps, mapea `Note ↔ NoteEntity` y delega en el DAO.
+
+3. **MVVM**
+   - `NotesViewModel` (`ui/notes`) crea un `StateFlow` de notas (`stateIn`) y expone acciones `suspend` que devuelven `Boolean` para que la UI muestre SnackBars ante fallos.
+   - `HomeScreen` y `DetailScreen` consumen los flujos y llaman al ViewModel para CRUD.
+
+4. **Service Locator**
+   - `di/ServiceLocator` crea instancias únicas de `NotesDatabase`, `NotesDao` y `NotesRepositoryImpl`.
+   - `MainActivity` usa `NotesViewModelFactory` para inyectar el repositorio en el ViewModel y compartirlo con el `NavGraph`.
+
+Este flujo asegura una única fuente de verdad para las notas, permite testear capas por separado y mantiene la UI desacoplada de la implementación de datos.
+
+---
+
 ## 📁 Estructura del Proyecto
 
 ```text
 app/src/main/java/edu/dam/notesapptyped/
 ├── data/                 # Estado global (AppState) y modelo Note
+│   ├── local/            # Capa Room (Database, DAO, entidades)
+│   ├── mappers/          # Conversiones Note ↔ NoteEntity
+│   ├── prefs/            # DataStore Preferences y repositorio de usuario
+│   └── repository/       # NotesRepository + implementación
 ├── navigation/           # Gráfico y rutas tipadas (@Serializable)
 ├── theme/                # Estilos, tipografía y colores Material 3
 └── ui/                   # Interfaz y pantallas
@@ -92,22 +130,25 @@ app/src/main/java/edu/dam/notesapptyped/
     ├── home/             # Pantalla principal (Home + Favoritos)
     ├── detail/           # Vista de detalle y edición
     ├── login/            # Pantalla de inicio de sesión
+    ├── notes/            # ViewModel y lógica MVVM de notas
     └── settings/         # Pantalla de ajustes
+├── di/                   # Service Locator para Room/Repository
 ```
 
 ---
 
 ## 🧱 Tecnologías
 
-| Tecnología                          | Uso principal                    |
-| ----------------------------------- | -------------------------------- |
-| **Kotlin**                          | Lenguaje base                    |
-| **Jetpack Compose**                 | UI declarativa y moderna         |
-| **Navigation Compose 2.9.5**        | Navegación tipada                |
-| **Material 3**                      | Componentes visuales             |
-| **Kotlin Serialization**            | Serialización para rutas seguras |
-| **Flow / MutableStateFlow**         | Gestión del estado reactivo      |
-| **Jetpack DataStore (Preferences)** | Persistencia ligera de ajustes   |
+| Tecnología                          | Uso principal                      |
+| ----------------------------------- | ---------------------------------- |
+| **Kotlin**                          | Lenguaje base                      |
+| **Jetpack Compose**                 | UI declarativa y moderna           |
+| **Navigation Compose 2.9.5**        | Navegación tipada                  |
+| **Material 3**                      | Componentes visuales               |
+| **Kotlin Serialization**            | Serialización para rutas seguras   |
+| **Flow / MutableStateFlow**         | Gestión del estado reactivo        |
+| **Jetpack DataStore (Preferences)** | Persistencia ligera de ajustes     |
+| **Room**                            | Persistencia estructurada de notas |
 
 ---
 

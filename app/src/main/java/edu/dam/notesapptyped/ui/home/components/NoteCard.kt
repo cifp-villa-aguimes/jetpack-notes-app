@@ -31,9 +31,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import edu.dam.notesapptyped.data.model.Note
 import edu.dam.notesapptyped.theme.animatedFavoriteColor
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import edu.dam.notesapptyped.ui.common.formatNoteTimestamp
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -42,13 +40,8 @@ internal fun NoteCard(
     onOpen: () -> Unit,
     onToggleFavorite: () -> Unit
 ) {
-    val formatter = remember {
-        DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
-    }
     val prettyDate = remember(note.updatedAt) {
-        Instant.ofEpochMilli(note.updatedAt)
-            .atZone(ZoneId.systemDefault())
-            .format(formatter)
+        formatNoteTimestamp(note.updatedAt)
     }
 
     // Color animado para el icono favorito

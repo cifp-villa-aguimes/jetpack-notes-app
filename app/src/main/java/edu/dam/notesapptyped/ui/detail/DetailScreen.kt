@@ -17,12 +17,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import edu.dam.notesapptyped.data.AppState
 import edu.dam.notesapptyped.theme.animatedFavoriteColor
+import edu.dam.notesapptyped.ui.common.formatNoteTimestamp
 import edu.dam.notesapptyped.ui.detail.components.EditNoteSheet
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import edu.dam.notesapptyped.ui.notes.NotesViewModel
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -30,11 +28,11 @@ import kotlinx.coroutines.launch
 @Composable
 fun DetailScreen(
     nav: NavController,
-    state: AppState,
+    notesViewModel: NotesViewModel,
     id: String
 ) {
-    val notes by state.notes.collectAsState()
-    val note = notes.firstOrNull { it.id == id }
+    val noteState by notesViewModel.observeNote(id).collectAsState(initial = null)
+    val currentNote = noteState
 
     val shortId = remember(id) { id.take(8).uppercase() }
     val scope = rememberCoroutineScope()
@@ -45,26 +43,21 @@ fun DetailScreen(
     // --- Edit sheet state ---
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showEdit by remember { mutableStateOf(false) }
-    var editTitle by rememberSaveable(note?.title) { mutableStateOf(note?.title.orEmpty()) }
-    var editBody by rememberSaveable(note?.body) { mutableStateOf(note?.body.orEmpty()) }
+    var editTitle by rememberSaveable(currentNote?.title) { mutableStateOf(currentNote?.title.orEmpty()) }
+    var editBody by rememberSaveable(currentNote?.body) { mutableStateOf(currentNote?.body.orEmpty()) }
 
     // formateo fecha
-    val formatter = remember { DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm") }
-    val prettyDate = remember(note?.updatedAt) {
-        note?.let {
-            Instant.ofEpochMilli(it.updatedAt)
-                .atZone(ZoneId.systemDefault())
-                .format(formatter)
-        } ?: ""
+    val prettyDate = remember(currentNote?.updatedAt) {
+        currentNote?.let { formatNoteTimestamp(it.updatedAt) } ?: ""
     }
 
     // color animado para la estrella
-    val starTint = animatedFavoriteColor(note?.isFavorite == true)
+    val starTint = animatedFavoriteColor(currentNote?.isFavorite == true)
 
     // Si la nota cambia (navegaste a otra, etc.), refresca los campos
-    LaunchedEffect(note?.id) {
-        editTitle = note?.title.orEmpty()
-        editBody = note?.body.orEmpty()
+    LaunchedEffect(currentNote?.id) {
+        editTitle = currentNote?.title.orEmpty()
+        editBody = currentNote?.body.orEmpty()
     }
 
     Scaffold(
@@ -79,8 +72,15 @@ fun DetailScreen(
                     }
                 },
                 actions = {
-                    if (note != null) {
-                        IconButton(onClick = { state.toggleFavorite(note.id) }) {
+                    currentNote?.let { note ->
+                        IconButton(onClick = {
+                            scope.launch {
+                                val success = notesViewModel.toggleFavorite(note.id)
+                                if (!success) {
+                                    snackbarHostState.showSnackbar("No se pudo guardar")
+                                }
+                            }
+                        }) {
                             Icon(
                                 imageVector = if (note.isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
                                 contentDescription = if (note.isFavorite) "Quitar de favoritos" else "Marcar como favorito",
@@ -109,10 +109,11 @@ fun DetailScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            if (note == null) {
+            if (currentNote == null) {
                 Text("Nota no encontrada", style = MaterialTheme.typography.titleLarge)
                 OutlinedButton(onClick = { nav.popBackStack() }) { Text("Volver") }
             } else {
+                val note = currentNote
                 // Título
                 Text(note.title, style = MaterialTheme.typography.headlineSmall)
 
@@ -138,7 +139,8 @@ fun DetailScreen(
     }
 
     // --- Sheet de edición (state hoisting) ---
-    if (showEdit && note != null) {
+    if (showEdit && currentNote != null) {
+        val note = currentNote
         EditNoteSheet(
             sheetState = sheetState,
             title = editTitle,
@@ -151,30 +153,43 @@ fun DetailScreen(
                 editBody = note.body
             },
             onSave = {
-                state.updateNote(
-                    id = note.id,
-                    title = editTitle.trim(),
-                    body = editBody.trim()
-                )
-                showEdit = false
-                scope.launch { snackbarHostState.showSnackbar("Nota actualizada") }
+                scope.launch {
+                    val success = notesViewModel.updateNote(
+                        id = note.id,
+                        title = editTitle.trim(),
+                        body = editBody.trim().ifBlank { null }
+                    )
+                    if (success) {
+                        showEdit = false
+                        snackbarHostState.showSnackbar("Nota actualizada")
+                    } else {
+                        snackbarHostState.showSnackbar("No se pudo guardar")
+                    }
+                }
             },
             onDismissRequest = { showEdit = false }
         )
     }
 
     // Confirmación de borrado
-    if (showConfirm && note != null) {
+    if (showConfirm && currentNote != null) {
+        val note = currentNote
         AlertDialog(
             onDismissRequest = { showConfirm = false },
             title = { Text("Eliminar nota") },
             text = { Text("¿Seguro que quieres eliminarla? Esta acción no se puede deshacer.") },
             confirmButton = {
                 TextButton(onClick = {
-                    state.deleteNote(note.id)
-                    showConfirm = false
-                    nav.popBackStack()
-                    scope.launch { snackbarHostState.showSnackbar("Nota eliminada") }
+                    scope.launch {
+                        val success = notesViewModel.deleteNote(note.id)
+                        showConfirm = false
+                        if (success) {
+                            nav.popBackStack()
+                            snackbarHostState.showSnackbar("Nota eliminada")
+                        } else {
+                            snackbarHostState.showSnackbar("No se pudo eliminar")
+                        }
+                    }
                 }) { Text("Eliminar") }
             },
             dismissButton = {

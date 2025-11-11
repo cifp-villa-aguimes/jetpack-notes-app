@@ -1,13 +1,15 @@
-# Architecture Overview (v0.4.0-datastore)
+# Architecture Overview (v0.5.0-room-mvvm)
 
-- **UI**: Jetpack Compose + Material3 (Scaffold, TopBar, BottomBar, FAB, Sheets, Dialogs). Se emplean componentes reutilizables (`SwipeableNoteCard`, hojas Add/Edit) para mantener coherencia.
+- **UI**: Jetpack Compose + Material3 (Scaffold, TopBar, BottomBar, FAB, Sheets, Dialogs). Se emplean componentes reutilizables (`SwipeableNoteCard`, Add/Edit sheets).
 - **Navigation**: Navigation Compose 2.9.5 con rutas tipadas (`@Serializable` + `toRoute()`), centralizadas en `navigation/NavGraph.kt`.
-- **State**: `AppState` expone `MutableStateFlow` para notas y nombre de usuario; las pantallas usan `collectAsState()`.
-- **Persistencia ligera**: `data/prefs/UserPrefsRepository` + Jetpack DataStore (Preferences) guardan nombre, modo oscuro, bienvenida vista y orden de notas.
+- **State**: `AppState` mantiene solo `userName` (DataStore) y reseteo en logout; las notas provienen de `NotesViewModel` (`StateFlow`).
+- **Persistencia ligera**: `data/prefs/UserPrefsRepository` + Jetpack DataStore guardan nombre, modo oscuro, bienvenida y orden.
+- **Persistencia estructurada**: `data/local` con Room (`NoteEntity`, `NotesDao`, `NotesDatabase`).
+- **Capas MVVM**: `data/repository/NotesRepositoryImpl` media entre DAO y dominio; `ui/notes/NotesViewModel` expone flujos y acciones suspend.
+- **Inyección**: `di/ServiceLocator` crea singletons de Room y repositorio, usados desde `MainActivity` para construir el ViewModel.
 - **Screens**: Login, Home (All/Favorites), Detail (view/edit), Settings.
 - **Componentes compartidos**: `ui/components/AppBottomBar`, utilidades en `ui/common` (validaciones, helpers UI).
 - **Edge-to-edge**: `WindowInsets.safeDrawing` para respetar notches.
-- **Pendiente**: integración de Room para CRUD persistente de notas.
 
 ## Flujos de navegación
 
@@ -17,19 +19,30 @@
 
 ## Estado y datos
 
-- `data/model/Note`: id, title, body, author, createdAt, updatedAt, isFavorite.
-- `data/AppState`: operaciones sobre notas (`add`, `update`, `delete`, `toggleFavorite`, `resetForLogout`) + sincronización con DataStore (nombre).
+- `data/model/Note`: modelo de dominio (body no nulo para simplificar UI).
+- `data/local/entity/NoteEntity`: representación Room con `body` nullable + índices.
+- `data/local/dao/NotesDao`: consultas reactivas (Flow) y operaciones suspend.
+- `data/repository/NotesRepository`: interfaz; `NotesRepositoryImpl` usa DAO y mappers `NoteEntity ↔ Note`.
 - `data/prefs/UserPrefsRepository`: llaves Preferences + flujos (`userNameFlow`, `darkModeFlow`, `welcomeShownFlow`, `sortByFlow`) y setters suspend.
+- `ui/notes/NotesViewModel`: expone `notes: StateFlow<List<Note>>`, `observeNote(id)` y acciones suspend con `runCatching` para manejo de errores.
+- `MainActivity`: crea `NotesViewModel` via `NotesViewModelFactory` (ServiceLocator) y sincroniza el nombre desde DataStore hacia `AppState`.
 
-## Persistencia ligera (DataStore)
+## Persistencia y MVVM
 
-- DataStore Preferences se instancia en `MainActivity` y se inyecta a `NavGraph` para compartirlo entre pantallas.
-- `MainActivity` aplica el modo oscuro leyendo `darkModeFlow` y sincroniza `userNameFlow` con `AppState`.
-- Login y Settings escriben el nombre; Settings controla bienvenida y orden (`SortBy` enum: `DATE`, `TITLE`, `FAVORITE`).
-- Home consume las preferencias para mostrar el diálogo de bienvenida una sola vez y ordenar la lista de notas.
+- Room persiste cada nota con timestamps `createdAt/updatedAt` generados en el repositorio.
+- `NotesRepositoryImpl` aplica la lógica de negocio mínima (IDs, timestamps, mapping, toggle favorito sin tocar `updatedAt`).
+- `NotesViewModel` encapsula operaciones suspend y notifica fallos (bool) para que la UI muestre SnackBars.
+- Home/Detail consumen flows (`collectAsState()`) y disparan acciones del ViewModel (add/update/toggle/delete).
 
 ## UI destacada
 
-- `ui/home/components/SwipeableNoteCard`: encapsula el gesto de swipe-to-delete con confirmación y estado hoisted.
-- `AddNoteSheet` / `EditNoteSheet`: hojas modales con límites de caracteres y diseño alineado.
+- `ui/home/components/SwipeableNoteCard`: gestiona swipe-to-delete y back swipe.
+- `AddNoteSheet` / `EditNoteSheet`: formularios con límite 80 caracteres, soporte favorito, consistencia visual.
 - Validaciones compartidas (`ui/common/UserNameValidation`): DRY para nickname en Login/Settings.
+
+## Diagrama simplificado (texto)
+
+```
+DataStore (Preferences) ──▶ UserPrefsRepository ──▶ (AppState userName / Screens)
+Room (NoteEntity) ──▶ NotesDao ─▶ NotesRepositoryImpl ─▶ NotesViewModel ─▶ HomeScreen / DetailScreen
+```

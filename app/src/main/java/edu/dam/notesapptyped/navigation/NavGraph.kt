@@ -13,25 +13,32 @@ import edu.dam.notesapptyped.ui.detail.DetailScreen
 import edu.dam.notesapptyped.ui.home.HomeScreen
 import edu.dam.notesapptyped.ui.login.LoginScreen
 import edu.dam.notesapptyped.ui.settings.SettingsScreen
+import edu.dam.notesapptyped.ui.notes.NotesViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NavGraph(navController: NavHostController, state: AppState, prefs: UserPrefsRepository) {
+fun NavGraph(
+    navController: NavHostController,
+    state: AppState,
+    prefs: UserPrefsRepository,
+    notesViewModel: NotesViewModel
+) {
     NavHost(navController, startDestination = Login) {
         composable<Login> { LoginScreen(navController, state, prefs) }
-        composable<Home> { HomeScreen(navController, state, prefs) }
+        composable<Home> { HomeScreen(navController, state, prefs, notesViewModel) }
         composable<Favorites> {
             HomeScreen(
                 nav = navController,
                 state = state,
                 prefs = prefs,
+                notesViewModel = notesViewModel,
                 onlyFavorites = true
             )
         }
         composable<Settings> { SettingsScreen(navController, state, prefs) }
         composable<Detail> { backStack ->
             val args = backStack.toRoute<Detail>()  // args.id
-            DetailScreen(navController, state, id = args.id)
+            DetailScreen(navController, notesViewModel, id = args.id)
         }
     }
 }
