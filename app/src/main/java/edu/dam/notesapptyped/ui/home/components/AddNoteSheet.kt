@@ -52,6 +52,9 @@ internal fun AddNoteSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState
     ) {
+        val titleLength = title.trim().length
+        val titleWithinLimit = titleLength <= 80
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -62,10 +65,13 @@ internal fun AddNoteSheet(
 
             OutlinedTextField(
                 value = title,
-                onValueChange = onTitleChange,
+                onValueChange = { newValue ->
+                    if (newValue.length <= 80) onTitleChange(newValue)
+                },
                 label = { Text("Título") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
+                supportingText = { Text("${titleLength} / 80") },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) })
             )
@@ -87,7 +93,7 @@ internal fun AddNoteSheet(
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Marcar como favorita", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "La verás arriba en Inicio y también en la pestaña Favoritos.",
+                        "La verás en Inicio y también en la pestaña Favoritos.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -112,7 +118,7 @@ internal fun AddNoteSheet(
 
                 Button(
                     onClick = { onSave(isFavorite) },
-                    enabled = title.isNotBlank(),
+                    enabled = title.isNotBlank() && titleWithinLimit,
                     modifier = Modifier.weight(1f)
                 ) { Text("Guardar") }
             }

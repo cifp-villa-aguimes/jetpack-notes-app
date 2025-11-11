@@ -20,21 +20,19 @@ import edu.dam.notesapptyped.data.AppState
 import edu.dam.notesapptyped.data.prefs.UserPrefsRepository
 import edu.dam.notesapptyped.navigation.Home
 import edu.dam.notesapptyped.navigation.Login
+import edu.dam.notesapptyped.ui.common.USERNAME_MAX
+import edu.dam.notesapptyped.ui.common.USERNAME_MIN
+import edu.dam.notesapptyped.ui.common.UserNameSupportingText
+import edu.dam.notesapptyped.ui.common.validateUserName
 import kotlinx.coroutines.launch
-
-private const val NAME_MIN = 3
-private const val NAME_MAX = 30
-private val NAME_REGEX = Regex("""^[\p{L}\p{N}_\- ]+$""")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(nav: NavController, state: AppState, prefs: UserPrefsRepository) {
     // --- Nick ---
     var nick by rememberSaveable { mutableStateOf("") }
-    val trimmed = remember(nick) { nick.trim() }
-    val lengthOk = trimmed.length in NAME_MIN..NAME_MAX
-    val charsetOk = trimmed.isEmpty() || NAME_REGEX.matches(trimmed)
-    val nickOk = trimmed.isNotEmpty() && lengthOk && charsetOk
+    val validation = remember(nick) { validateUserName(nick) }
+    val nickOk = validation.isValid
 
     // Precargar desde DataStore si existe
     val savedName by prefs.userNameFlow.collectAsState(initial = "")
@@ -88,15 +86,8 @@ fun LoginScreen(nav: NavController, state: AppState, prefs: UserPrefsRepository)
                 onValueChange = { nick = it },
                 label = { Text("Tu nick/usuario") },
                 singleLine = true,
-                isError = nick.isNotEmpty() && (!lengthOk || !charsetOk),
-                supportingText = {
-                    when {
-                        nick.isEmpty() -> Text("${trimmed.length} / $NAME_MAX")
-                        !lengthOk -> Text("Entre $NAME_MIN y $NAME_MAX caracteres · ${trimmed.length} / $NAME_MAX")
-                        !charsetOk -> Text("Solo letras, números, espacios, _ y - · ${trimmed.length} / $NAME_MAX")
-                        else -> Text("${trimmed.length} / $NAME_MAX")
-                    }
-                },
+                isError = nick.isNotEmpty() && (!validation.lengthAllowed || !validation.charsetAllowed),
+                supportingText = { UserNameSupportingText(validation) },
                 trailingIcon = {
                     if (nick.isNotEmpty()) {
                         IconButton(onClick = { nick = "" }) {
@@ -131,8 +122,8 @@ fun LoginScreen(nav: NavController, state: AppState, prefs: UserPrefsRepository)
                     keyboardActions = KeyboardActions(
                         onDone = {
                             if (canEnter) {
-                                state.userName.value = trimmed
-                                scope.launch { prefs.setUserName(trimmed) }
+                                state.userName.value = validation.trimmed
+                                scope.launch { prefs.setUserName(validation.trimmed) }
                                 focus.clearFocus()
                                 nav.navigate(Home) {
                                     popUpTo(Login) { inclusive = true }
@@ -154,8 +145,8 @@ fun LoginScreen(nav: NavController, state: AppState, prefs: UserPrefsRepository)
             Button(
                 enabled = canEnter,
                 onClick = {
-                    state.userName.value = trimmed
-                    scope.launch { prefs.setUserName(trimmed) }
+                    state.userName.value = validation.trimmed
+                    scope.launch { prefs.setUserName(validation.trimmed) }
                     focus.clearFocus()
                     nav.navigate(Home) {
                         popUpTo(Login) { inclusive = true }

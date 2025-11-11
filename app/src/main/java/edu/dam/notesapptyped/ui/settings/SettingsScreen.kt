@@ -23,11 +23,11 @@ import edu.dam.notesapptyped.data.prefs.SortBy
 import edu.dam.notesapptyped.data.prefs.UserPrefsRepository
 import edu.dam.notesapptyped.navigation.Settings
 import edu.dam.notesapptyped.ui.components.AppBottomBar
+import edu.dam.notesapptyped.ui.common.USERNAME_MAX
+import edu.dam.notesapptyped.ui.common.USERNAME_MIN
+import edu.dam.notesapptyped.ui.common.UserNameSupportingText
+import edu.dam.notesapptyped.ui.common.validateUserName
 import kotlinx.coroutines.launch
-
-private const val NAME_MIN = 3
-private const val NAME_MAX = 30
-private val NAME_REGEX = Regex("""^[\p{L}\p{N}_\- ]+$""") // letras/números/espacio/_-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,10 +49,10 @@ fun SettingsScreen(
     LaunchedEffect(currentDark) { tempDark = currentDark }
 
     // Validación
-    val trimmed = remember(tempName) { tempName.trim() }
-    val lengthOk = trimmed.length in NAME_MIN..NAME_MAX
-    val charsetOk =
-        trimmed.isEmpty() || NAME_REGEX.matches(trimmed) // permite vacío mientras escribes
+    val validation = remember(tempName) { validateUserName(tempName) }
+    val trimmed = validation.trimmed
+    val lengthOk = validation.lengthAllowed
+    val charsetOk = validation.charsetAllowed
     val hasChanges = trimmed != currentName
     val canSave = trimmed.isNotEmpty() && lengthOk && charsetOk && hasChanges
 
@@ -87,15 +87,7 @@ fun SettingsScreen(
                 label = { Text("Nombre de usuario") },
                 singleLine = true,
                 isError = tempName.isNotEmpty() && (!lengthOk || !charsetOk),
-                supportingText = {
-                    val count = "${trimmed.length} / $NAME_MAX"
-                    when {
-                        tempName.isEmpty() -> Text(count)
-                        !lengthOk -> Text("Entre $NAME_MIN y $NAME_MAX caracteres · $count")
-                        !charsetOk -> Text("Solo letras, números, espacios, _ y - · $count")
-                        else -> Text(count)
-                    }
-                },
+                supportingText = { UserNameSupportingText(validation) },
                 trailingIcon = {
                     if (tempName.isNotEmpty()) {
                         IconButton(onClick = { tempName = "" }) {
