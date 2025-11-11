@@ -43,4 +43,5 @@ compose-debug.out
 .DS_Store
 Thumbs.db
 *.tmp
+.vscode/
 *.bak

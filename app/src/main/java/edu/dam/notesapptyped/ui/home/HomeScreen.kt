@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import edu.dam.notesapptyped.data.AppState
+import edu.dam.notesapptyped.data.prefs.SortBy
+import edu.dam.notesapptyped.data.prefs.UserPrefsRepository
 import edu.dam.notesapptyped.navigation.Detail
 import edu.dam.notesapptyped.navigation.Favorites
 import edu.dam.notesapptyped.navigation.Home
@@ -31,11 +33,14 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     nav: NavController,
     state: AppState,
+    prefs: UserPrefsRepository,
     onlyFavorites: Boolean = false
 ) {
     // Conectar los StateFlow a Compose
     val name by state.userName.collectAsState()
     val notes by state.notes.collectAsState()
+    val sortBy by prefs.sortByFlow.collectAsState(initial = SortBy.DATE)
+    val welcomeShown by prefs.welcomeShownFlow.collectAsState(initial = false)
 
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -52,6 +57,25 @@ fun HomeScreen(
     fun resetForm() {
         newTitle = ""
         newBody = ""
+    }
+    // Diálogo de bienvenida (solo cuando aún no se ha mostrado)
+    if (!welcomeShown && !onlyFavorites) {
+        AlertDialog(
+            onDismissRequest = {
+                scope.launch { prefs.setWelcomeShown(true) }
+            },
+            title = { Text("¡Bienvenido!") },
+            text = {
+                Text("Esta app demuestra navegación tipada, estado con Flow y persistencia.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    scope.launch { prefs.setWelcomeShown(true) }
+                }) {
+                    Text("Entendido")
+                }
+            }
+        )
     }
 
     // Título dinámico
@@ -102,10 +126,17 @@ fun HomeScreen(
         },
         bottomBar = { AppBottomBar(nav = nav, current = if (onlyFavorites) Favorites else Home) }
     ) { innerPadding ->
-        val sortedNotes by remember(notes, onlyFavorites) {
+        val sortedNotes by remember(notes, onlyFavorites, sortBy) {
             derivedStateOf {
                 val base = if (onlyFavorites) notes.filter { it.isFavorite } else notes
-                base.sortedByDescending { it.updatedAt }   // solo por fecha de actualización
+                when (sortBy) {
+                    SortBy.DATE -> base.sortedByDescending { it.updatedAt }
+                    SortBy.TITLE -> base.sortedBy { it.title.lowercase() }
+                    SortBy.FAVORITE -> base.sortedWith(
+                        compareByDescending<edu.dam.notesapptyped.data.model.Note> { it.isFavorite }
+                            .thenByDescending { it.updatedAt }
+                    )
+                }
             }
         }
         val (emptyTitle, emptySubtitle) = remember(onlyFavorites) {

@@ -1,11 +1,14 @@
 package edu.dam.notesapptyped.ui.settings
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -16,8 +19,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import edu.dam.notesapptyped.data.AppState
+import edu.dam.notesapptyped.data.prefs.SortBy
+import edu.dam.notesapptyped.data.prefs.UserPrefsRepository
 import edu.dam.notesapptyped.navigation.Settings
 import edu.dam.notesapptyped.ui.components.AppBottomBar
+import kotlinx.coroutines.launch
 
 private const val NAME_MIN = 3
 private const val NAME_MAX = 30
@@ -27,13 +33,20 @@ private val NAME_REGEX = Regex("""^[\p{L}\p{N}_\- ]+$""") // letras/números/esp
 @Composable
 fun SettingsScreen(
     nav: NavController,
-    state: AppState
+    state: AppState,
+    prefs: UserPrefsRepository
 ) {
     val currentName by state.userName.collectAsState()
+    val savedName by prefs.userNameFlow.collectAsState(initial = "")
+    val currentDark by prefs.darkModeFlow.collectAsState(initial = false)
+    val currentSort by prefs.sortByFlow.collectAsState(initial = SortBy.DATE)
+    val scope = rememberCoroutineScope()
     var tempName by rememberSaveable { mutableStateOf("") }
+    var tempDark by rememberSaveable { mutableStateOf(false) }
 
-    // Prefill y sincronía si cambia el nombre global
-    LaunchedEffect(currentName) { tempName = currentName }
+    // Prefill inicial desde DataStore (y sincronía si cambia)
+    LaunchedEffect(savedName) { tempName = savedName }
+    LaunchedEffect(currentDark) { tempDark = currentDark }
 
     // Validación
     val trimmed = remember(tempName) { tempName.trim() }
@@ -62,6 +75,7 @@ fun SettingsScreen(
         Column(
             Modifier
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -109,6 +123,7 @@ fun SettingsScreen(
                 Button(
                     onClick = {
                         state.userName.value = trimmed
+                        scope.launch { prefs.setUserName(trimmed) }
                         focus.clearFocus()
                         nav.popBackStack()
                     },
@@ -137,6 +152,130 @@ fun SettingsScreen(
                     modifier = Modifier.align(Alignment.End)
                 ) { Text("Cancelar") }
             }
+
+            SettingsSection(
+                title = "Orden de notas",
+                subtitle = "Define cómo se listan tus notas en la pantalla principal"
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SortOption(
+                        label = "Por fecha (recientes primero)",
+                        selected = currentSort == SortBy.DATE,
+                        onSelect = { scope.launch { prefs.setSortBy(SortBy.DATE) } }
+                    )
+                    SortOption(
+                        label = "Por título (A–Z)",
+                        selected = currentSort == SortBy.TITLE,
+                        onSelect = { scope.launch { prefs.setSortBy(SortBy.TITLE) } }
+                    )
+                    SortOption(
+                        label = "Favoritas primero",
+                        selected = currentSort == SortBy.FAVORITE,
+                        onSelect = { scope.launch { prefs.setSortBy(SortBy.FAVORITE) } }
+                    )
+                }
+            }
+
+            SettingsSection(
+                title = "Tema de la aplicación",
+                subtitle = "Activa el modo oscuro en todos los apartados"
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Tema oscuro", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Afecta a las pantallas Home, Favoritos y Ajustes.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = tempDark,
+                        onCheckedChange = { checked ->
+                            tempDark = checked
+                            scope.launch { prefs.setDarkMode(checked) }
+                        }
+                    )
+                }
+            }
+
+            SettingsSection(
+                title = "Mensaje de bienvenida",
+                subtitle = "Controla si quieres volver a ver la introducción"
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Vuelve a mostrar el diálogo en el próximo inicio.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    FilledTonalButton(onClick = { scope.launch { prefs.setWelcomeShown(false) } }) {
+                        Text("Reiniciar")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SortOption(
+    label: String,
+    selected: Boolean,
+    onSelect: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = onSelect
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(label)
+    }
+}
+
+@Composable
+private fun SettingsSection(
+    title: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    OutlinedCard(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            subtitle?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            content()
         }
     }
 }

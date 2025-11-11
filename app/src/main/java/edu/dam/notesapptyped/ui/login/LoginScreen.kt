@@ -17,8 +17,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import edu.dam.notesapptyped.data.AppState
+import edu.dam.notesapptyped.data.prefs.UserPrefsRepository
 import edu.dam.notesapptyped.navigation.Home
 import edu.dam.notesapptyped.navigation.Login
+import kotlinx.coroutines.launch
 
 private const val NAME_MIN = 3
 private const val NAME_MAX = 30
@@ -26,13 +28,19 @@ private val NAME_REGEX = Regex("""^[\p{L}\p{N}_\- ]+$""")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(nav: NavController, state: AppState) {
+fun LoginScreen(nav: NavController, state: AppState, prefs: UserPrefsRepository) {
     // --- Nick ---
     var nick by rememberSaveable { mutableStateOf("") }
     val trimmed = remember(nick) { nick.trim() }
     val lengthOk = trimmed.length in NAME_MIN..NAME_MAX
     val charsetOk = trimmed.isEmpty() || NAME_REGEX.matches(trimmed)
     val nickOk = trimmed.isNotEmpty() && lengthOk && charsetOk
+
+    // Precargar desde DataStore si existe
+    val savedName by prefs.userNameFlow.collectAsState(initial = "")
+    LaunchedEffect(savedName) {
+        if (nick.isEmpty() && savedName.isNotEmpty()) nick = savedName
+    }
 
     // --- Captcha (+ / -) sin resultado negativo en '-'
     data class Captcha(val a: Int, val b: Int, val op: Char) {
@@ -57,6 +65,7 @@ fun LoginScreen(nav: NavController, state: AppState) {
 
     val canEnter = nickOk && capOk
     val focus = LocalFocusManager.current
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -123,6 +132,7 @@ fun LoginScreen(nav: NavController, state: AppState) {
                         onDone = {
                             if (canEnter) {
                                 state.userName.value = trimmed
+                                scope.launch { prefs.setUserName(trimmed) }
                                 focus.clearFocus()
                                 nav.navigate(Home) {
                                     popUpTo(Login) { inclusive = true }
@@ -145,6 +155,7 @@ fun LoginScreen(nav: NavController, state: AppState) {
                 enabled = canEnter,
                 onClick = {
                     state.userName.value = trimmed
+                    scope.launch { prefs.setUserName(trimmed) }
                     focus.clearFocus()
                     nav.navigate(Home) {
                         popUpTo(Login) { inclusive = true }
