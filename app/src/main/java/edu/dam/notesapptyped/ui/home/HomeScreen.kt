@@ -21,7 +21,7 @@ import edu.dam.notesapptyped.navigation.Home
 import edu.dam.notesapptyped.navigation.Login
 import edu.dam.notesapptyped.ui.components.AppBottomBar
 import edu.dam.notesapptyped.ui.home.components.AddNoteSheet
-import edu.dam.notesapptyped.ui.home.components.NoteCard
+import edu.dam.notesapptyped.ui.home.components.SwipeableNoteCard
 import kotlinx.coroutines.launch
 
 
@@ -141,13 +141,15 @@ fun HomeScreen(
             } else {
                 items(
                     items = sortedNotes,
-                    key = { it.id }
+                    key = { it.id },
+                    contentType = { "note" }
                 ) { note ->
-                    NoteCard(
+                    SwipeableNoteCard(
                         note = note,
                         onOpen = { nav.navigate(Detail(id = note.id)) },
                         onToggleFavorite = { state.toggleFavorite(note.id) },
-                        onDelete = { toDeleteId = note.id }
+                        onSwipeToDelete = { toDeleteId = note.id },
+                        modifier = Modifier.animateItem()
                     )
                 }
             }
@@ -208,4 +210,3 @@ fun HomeScreen(
         }
     }
 }
-

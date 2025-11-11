@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.ElevatedCard
@@ -35,8 +34,7 @@ import java.time.format.DateTimeFormatter
 internal fun NoteCard(
     note: Note,
     onOpen: () -> Unit,
-    onToggleFavorite: () -> Unit,
-    onDelete: () -> Unit
+    onToggleFavorite: () -> Unit
 ) {
     val formatter = remember {
         DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
@@ -87,27 +85,13 @@ internal fun NoteCard(
             // EMPUJA el footer al fondo del card
             Spacer(Modifier.weight(1f, fill = true))
 
-            // BOTTOM: meta + eliminar
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "por ${note.author} • $prettyDate",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                IconButton(onClick = onDelete) {
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = "Eliminar nota",
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
+            // BOTTOM: metadata
+            Text(
+                text = "por ${note.author} • $prettyDate",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }
